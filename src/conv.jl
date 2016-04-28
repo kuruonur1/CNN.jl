@@ -1,6 +1,6 @@
 
 function convy{T}(x0::SubArray{T,2}, w::SubArray{T,2}, padding::Array{Int,1}, stride::Array{Int,1}; xcorr=false)
-    if any(padding .> 0) # this could be handled better...
+    if any(padding .> 0) # this could be handled better....
         x=zeros(eltype(x0), 2*padding+collect(size(x0))...)
         x[padding[1]+1:end-padding[1],padding[2]+1:end-padding[2]] = x0
     else
