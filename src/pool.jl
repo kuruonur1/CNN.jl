@@ -1,5 +1,5 @@
 
-function cudnnPoolingForward{T}(x::Array{T,4}, y; window=2, padding=0, stride=window, mode=CUDNN_POOLING_MAX)
+function poolingForward{T}(x::Array{T,4}, y; window=2, padding=0, stride=window, mode=0)
     stride = isa(stride, Integer) ? (stride, stride) : stride
     window = isa(window, Integer) ? (window,window) : window
     padding = isa(padding, Integer) ? (padding,padding) : padding
@@ -10,12 +10,11 @@ function cudnnPoolingForward{T}(x::Array{T,4}, y; window=2, padding=0, stride=wi
         x[padding[1]+1:end-padding[1], padding[2]+1:end-padding[2],:,:] = x0
     end
     fill!(y,0)
-    @assert (mode==CUDNN_POOLING_MAX)
+    @assert (mode==0)
     # x: (W,H,C,N)
     Wx,Hx,C,Nx = size(x);
     Wy,Hy,K,Ny = size(y);
     @assert (Nx == Ny && C==K)
-    # @inbounds for n in 1:Nx, c in 1:C, j in 1:stride[2]:Hx, i in 1:stride[1]:Wx
     @inbounds for n in 1:Nx, c in 1:C, jy in 1:Hy, iy in 1:Wy
         # iy, jy = div(i,stride[1])+1, div(j,stride[2])+1
         i, j = 1+stride[1]*(iy-1), 1+stride[2]*(jy-1)
@@ -26,12 +25,13 @@ function cudnnPoolingForward{T}(x::Array{T,4}, y; window=2, padding=0, stride=wi
     return y
 end
 
-function cudnnPoolingBackward{T}(y::Array{T,4}, dy::Array{T,4}, x::Array{T,4}, dx::Array{T,4}; window=2, padding=0, stride=window, mode=CUDNN_POOLING_MAX)
+# mode == 0 maxpooling
+function poolingBackward{T}(y::Array{T,4}, dy::Array{T,4}, x::Array{T,4}, dx::Array{T,4}; window=2, padding=0, stride=window, mode=0)
     stride = isa(stride, Integer) ? (stride, stride) : stride
     window = isa(window, Integer) ? (window,window) : window
     padding = isa(padding, Integer) ? (padding,padding) : padding
     fill!(dx,0)
-    @assert mode==CUDNN_POOLING_MAX
+    @assert mode==0
     # x: (W,H,C,N)
     if any(map(x->x>0,padding))
         x0=x
@@ -55,12 +55,14 @@ function cudnnPoolingBackward{T}(y::Array{T,4}, dy::Array{T,4}, x::Array{T,4}, d
         di,dj = ind2sub(a,indmax(a))
         # dx[i+di-1-padding[1],j+dj-1-padding[2],c,n] += dy[iy,jy,c,n]
         dx1[i+di-1,j+dj-1,c,n] += dy[iy,jy,c,n]
+        any(map(x->x>0,padding)) && (dx[:,:,c,n] = dx1[padding[1]+1:end-padding[1],padding[2]+1:end-padding[2],c,n])
     end
-    dx = dx1[padding[1]+1:end-padding[1],padding[2]+1:end-padding[2]]
+    # @show dx1
+    # dx = dx1[padding[1]+1:end-padding[1],padding[2]+1:end-padding[2],:,:]
     return dx
 end
 
-function cudnnGetPoolingNdForwardOutputDim{T}(x::Array{T,4}; window=2, padding=0, stride=1, mode=CUDNN_POOLING_MAX)
+function getPoolingNdForwardOutputDim{T}(x::Array{T,4}; window=2, padding=0, stride=1, mode=0)
     window = isa(window, Integer) ? (window,window) : window
     padding = isa(padding, Integer) ? (padding,padding) : padding
     stride = isa(stride, Integer) ? (stride,stride) : stride
