@@ -2,7 +2,10 @@
 CNN provides convolution/pooling forward/backward operations to train a Convolutional Neural Network (CNN) on CPU. It utilizes parallel matrix multiplications (gemm) for speed up and has full support for any stride and pooling size. The module serves as the backbone to power up CNNs and has similar interface to [CUDNN.jl](https://github.com/JuliaGPU/CUDNN.jl).
 
 ## Convolution
-x: Input, w: Filter, y: Output
+x: (Wx,Hx,C,N) # input
+w: (Ww,Hw,C,K) # filter
+y: (Wy,Hy,K,N) # output
+
 `convolutionForward(x, w, y; padding=(0,0), stride=(1,1))` This function computes and returns y, the convolution of x with filter (w) under the settings (padding=(p1,p2), stride=(s1,s2)). The settings default to (padding=(0,0), stride=(1,1)). 
 
 `convolutionBackwardFilter(x, dy, dw; padding=(0,0), stride=(1,1))` Given x and dJ/dy (abbrev. dy: derivative with respect to the output), this function computes and returns dJ/dw (abbrev. dw: derivative with respect to the filter). Notice that forward and backward settings must match for consistency.
