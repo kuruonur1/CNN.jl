@@ -3,7 +3,9 @@ CNN provides convolution/pooling forward/backward operations to train a Convolut
 
 ## Convolution
 x: (Wx,Hx,C,N) # input
+
 w: (Ww,Hw,C,K) # filter
+
 y: (Wy,Hy,K,N) # output
 
 `convolutionForward(x, w, y; padding=(0,0), stride=(1,1))` This function computes and returns y, the convolution of x with filter (w) under the settings (padding=(p1,p2), stride=(s1,s2)). The settings default to (padding=(0,0), stride=(1,1)). 
